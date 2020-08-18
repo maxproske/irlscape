@@ -1,0 +1,10 @@
+{
+  // Run ESLint upon saving JavaScript files
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.workingDirectories": [
+    "api",
+    "client"
+  ],
+}
