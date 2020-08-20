@@ -125,7 +125,7 @@ const StyledCell = styled.div`
   ${({ align }) => align && `text-align: right;`}
 `
 
-const Home = () => {
+const Home = ({ projects, entries }) => {
   return (
     <StyledWrapper>
       <StyledBackground />
@@ -176,3 +176,37 @@ const Home = () => {
 }
 
 export default Home
+
+export const getServerSideProps = async () => {
+  console.log('getStaticProps fired')
+
+  // Get projects
+  const projectsResponse = await fetch(`http://localhost:3000/api/projects`)
+
+  // So much power!
+  if (!projectsResponse.ok) {
+    console.log('Projects response not ok')
+    return { props: {} }
+  }
+
+  const projects = await projectsResponse.json()
+
+  // Get entries
+  const entriesResponse = await fetch(`http://localhost:3000/api/entries`)
+
+  if (!entriesResponse.ok) {
+    console.log('Entries response not ok')
+    return { props: {} }
+  }
+
+  const entries = await entriesResponse.json()
+
+  if (projects && entries) {
+    return {
+      props: {
+        projects,
+        entries,
+      },
+    }
+  }
+}
