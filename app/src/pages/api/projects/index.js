@@ -1,4 +1,17 @@
 const axios = require('axios')
+const redis = require('redis')
+
+// Create Redis instnace
+const redisInstance = redis.createClient({
+  host: 'irlscape-redis', // Container name
+  port: 6379,
+})
+
+redisInstance.on('error', (err) => {
+  console.error('Redis error: ', err)
+})
+
+const projectsRedisKey = 'projects'
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -31,14 +44,26 @@ const handler = async (req, res) => {
 const handleGet = async (req, res) => {
   const { v9APIUrl } = togglConfig
 
-  console.log('missed projects cache')
-  const url = `${v9APIUrl}/me/projects`
-  const projects = await axiosInstance
-    .get(url)
-    .then((res) => res.data)
-    .catch((err) => console.log(err))
+  // Try fetching from Redis first
+  redisInstance.get(projectsRedisKey, async (err, cachedProjects) => {
+    if (cachedProjects) {
+      console.log('hit projects cache')
+      return res.json(JSON.parse(cachedProjects))
+    }
+    // Key doesn't exist in Redis store
+    else {
+      console.log('missed projects cache')
+      const url = `${v9APIUrl}/me/projects`
+      const projects = await axiosInstance
+        .get(url)
+        .then((res) => res.data)
+        .catch((err) => console.log(err))
 
-  return res.json(projects)
+      redisInstance.set(projectsRedisKey, JSON.stringify(projects))
+
+      return res.json(projects)
+    }
+  })
 }
 
 export default handler
