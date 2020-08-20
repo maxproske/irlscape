@@ -45,25 +45,31 @@ const handleGet = async (req, res) => {
   const { v9APIUrl } = togglConfig
 
   // Try fetching from Redis first
-  redisInstance.get(projectsRedisKey, async (err, cachedProjects) => {
-    if (cachedProjects) {
-      console.log('hit projects cache')
-      return res.json(JSON.parse(cachedProjects))
-    }
-    // Key doesn't exist in Redis store
-    else {
-      console.log('missed projects cache')
-      const url = `${v9APIUrl}/me/projects`
-      const projects = await axiosInstance
-        .get(url)
-        .then((res) => res.data)
-        .catch((err) => console.log(err))
+  const projects = await new Promise((resolve) => {
+    redisInstance.get(projectsRedisKey, async (err, cachedProjects) => {
+      if (cachedProjects) {
+        console.log('hit projects cache')
+        const projects = JSON.parse(cachedProjects)
 
-      redisInstance.set(projectsRedisKey, JSON.stringify(projects))
+        return resolve(projects)
+      }
+      // Key doesn't exist in Redis store
+      else {
+        console.log('missed projects cache')
+        const url = `${v9APIUrl}/me/projects`
+        const projects = await axiosInstance
+          .get(url)
+          .then((res) => res.data)
+          .catch((err) => console.log(err))
 
-      return res.json(projects)
-    }
+        redisInstance.set(projectsRedisKey, JSON.stringify(projects))
+
+        return resolve(projects)
+      }
+    })
   })
+
+  res.json(projects)
 }
 
 export default handler
