@@ -1,23 +1,17 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 import styled from 'styled-components'
 
-const StyledWrapper = styled.div``
-
-const StyledBackground = styled.div`
+const StyledWrapper = styled.div`
   background: url('/static/bg.jpg') repeat-y scroll center top black;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
+  padding-top: 10px;
+  padding-bottom: 4rem;
 `
 
 const StyledFrame = styled.div`
   background-color: black;
   border: 2px solid #382418;
-  margin-top: 10px;
+
   overflow: hidden;
   position: relative;
   width: 753px;
@@ -126,9 +120,50 @@ const StyledCell = styled.div`
 `
 
 const Home = ({ projects, entries }) => {
+  const [skills, setSkills] = useState(null)
+
+  // TODO: Cache this server-side
+  useEffect(() => {
+    if (projects && entries) {
+      let skillsUpdate = []
+      for (const entry of entries) {
+        const { project, seconds } = entry
+
+        const skillIndex = skillsUpdate.findIndex((skill) => skill.name === project)
+
+        if (skillIndex === -1) {
+          skillsUpdate.push({
+            name: project,
+            xp: seconds * 0.36206752777,
+          })
+        } else {
+          skillsUpdate[skillIndex].xp += seconds * 0.36206752777
+        }
+      }
+
+      // Sort by xp
+      skillsUpdate.sort((a, b) => b.xp - a.xp)
+
+      setSkills(skillsUpdate)
+    }
+  }, [entries, projects])
+
+  const xpToLevel = (xp) => {
+    const equate = (xp) => Math.floor(xp + 300 * Math.pow(2, xp / 7))
+
+    const levelToXp = (level) => {
+      let xp = 0
+      for (let i = 1; i < level; i++) xp += equate(i)
+      return Math.floor(xp / 4)
+    }
+
+    let level = 1
+    while (levelToXp(level) < xp) level++
+    return level
+  }
+
   return (
     <StyledWrapper>
-      <StyledBackground />
       <StyledFrame>
         <StyledLogin>Log in</StyledLogin>
       </StyledFrame>
@@ -150,23 +185,24 @@ const Home = ({ projects, entries }) => {
               <StyledHeader align={'right'}>Level</StyledHeader>
               <StyledHeader align={'right'}>XP</StyledHeader>
             </StyledRow>
-            <StyledRow>
-              <StyledCell>
-                <img src="/static/placeholder.png" alt="Placeholder" /> React
-              </StyledCell>
-              <StyledCell align={'right'}>15</StyledCell>
-              <StyledCell align={'right'}>99</StyledCell>
-              <StyledCell align={'right'}>200,000,000</StyledCell>
-            </StyledRow>
-            <StyledRow>
-              <StyledCell>
-                <img src="/static/placeholder.png" alt="Placeholder" /> In the Groove 2
-              </StyledCell>
-              <StyledCell align={'right'}>109</StyledCell>
-              <StyledCell align={'right'}>99</StyledCell>
-              <StyledCell align={'right'}>200,000,000</StyledCell>
-            </StyledRow>
-            <StyledRow></StyledRow>
+            {skills &&
+              skills.map((skill, i) => {
+                const xp = Math.floor(skill.xp)
+                  .toString()
+                  .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+                const level = xpToLevel(skill.xp)
+
+                return (
+                  <StyledRow key={skill.name}>
+                    <StyledCell>
+                      <img src="/static/placeholder.png" alt="Placeholder" /> {skill.name}
+                    </StyledCell>
+                    <StyledCell align={'right'}>1</StyledCell>
+                    <StyledCell align={'right'}>{level}</StyledCell>
+                    <StyledCell align={'right'}>{xp}</StyledCell>
+                  </StyledRow>
+                )
+              })}
           </StyledTable>
         </StyledScores>
         <StyledScrollBottom />
@@ -174,8 +210,6 @@ const Home = ({ projects, entries }) => {
     </StyledWrapper>
   )
 }
-
-export default Home
 
 export const getServerSideProps = async () => {
   console.log('getStaticProps fired')
@@ -210,3 +244,5 @@ export const getServerSideProps = async () => {
     }
   }
 }
+
+export default Home

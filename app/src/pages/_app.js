@@ -11,6 +11,10 @@ export const GlobalStyle = createGlobalStyle`
     -moz-box-sizing: border-box;
     box-sizing: border-box;
   }
+
+  html {
+    background-color: black;
+  }
   
   body {
     font-family: Arial, Helvetica, sans-serif;
