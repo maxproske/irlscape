@@ -135,9 +135,11 @@ const Home = ({ projects, entries }) => {
           skillsUpdate.push({
             name: project,
             xp: seconds * 0.36206752777,
+            hours: seconds / 60 / 60,
           })
         } else {
           skillsUpdate[skillIndex].xp += seconds * 0.36206752777
+          skillsUpdate[skillIndex].hours += seconds / 60 / 60
         }
       }
 
@@ -182,24 +184,32 @@ const Home = ({ projects, entries }) => {
             <StyledRow>
               <StyledHeader>&nbsp;&nbsp;Skill</StyledHeader>
               <StyledHeader align={'right'}>Rank</StyledHeader>
-              <StyledHeader align={'right'}>Level</StyledHeader>
-              <StyledHeader align={'right'}>XP</StyledHeader>
+              <StyledHeader align={'right'}>
+                <acronym title="Level 99 = 10,000 Hours">Level</acronym>
+              </StyledHeader>
+              <StyledHeader align={'right'}>
+                <acronym title="1,303 XP/hour">XP</acronym>
+              </StyledHeader>
             </StyledRow>
             {skills &&
               skills.map((skill, i) => {
+                const { name } = skill
                 const xp = Math.floor(skill.xp)
                   .toString()
                   .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
                 const level = xpToLevel(skill.xp)
+                const hours = Math.floor(skill.hours)
 
                 return (
                   <StyledRow key={skill.name}>
                     <StyledCell>
-                      <img src="/static/placeholder.png" alt="Placeholder" /> {skill.name}
+                      <img src="/static/placeholder.png" alt="Placeholder" /> {name}
                     </StyledCell>
                     <StyledCell align={'right'}>1</StyledCell>
                     <StyledCell align={'right'}>{level}</StyledCell>
-                    <StyledCell align={'right'}>{xp}</StyledCell>
+                    <StyledCell align={'right'}>
+                      <acronym title={`${hours} Hours`}>{xp}</acronym>
+                    </StyledCell>
                   </StyledRow>
                 )
               })}
