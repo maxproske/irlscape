@@ -181,11 +181,11 @@ const Home = ({ skills }) => {
   )
 }
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async ({ req }) => {
   console.log('getStaticProps fired')
 
-  // Get entries
-  const response = await fetch(`http://localhost:3000/api/users/1/skills`)
+  const { host } = req.headers
+  const response = await fetch(`http://${host}/api/users/1/skills`)
 
   if (!response.ok) {
     console.log('Response not ok')
