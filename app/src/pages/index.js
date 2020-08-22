@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 
 import styled from 'styled-components'
 
 const StyledWrapper = styled.div`
+  min-height: 100vh;
   background: url('/static/bg.jpg') repeat-y scroll center top black;
   padding-top: 10px;
   padding-bottom: 4rem;
@@ -33,6 +34,7 @@ const StyledBanner = styled.div`
   width: 759px;
   height: 130px;
   background: url('/static/banner.png') no-repeat;
+  background-size: contain;
 `
 
 const StyledBannerFrame = styled.div`
@@ -98,7 +100,7 @@ const StyledTable = styled.div`
   grid-template-rows: auto;
 
   max-width: 355px;
-  padding: 0 22px 1rem 22px;
+  padding: 0 22px 0.5rem 22px;
 `
 
 const StyledRow = styled.div`
@@ -119,51 +121,30 @@ const StyledCell = styled.div`
   ${({ align }) => align && `text-align: right;`}
 `
 
-const Home = ({ projects, entries }) => {
-  const [skills, setSkills] = useState(null)
+const Home = ({ skills }) => {
+  const getSkillsComponent = () => {
+    if (skills) {
+      // Sort
+      skills.sort((a, b) => b.xp - a.xp)
 
-  // TODO: Cache this server-side
-  useEffect(() => {
-    if (projects && entries) {
-      let skillsUpdate = []
-      for (const entry of entries) {
-        const { project, seconds } = entry
+      return skills.map((skill) => {
+        const { name, xp, hours, level } = skill
 
-        const skillIndex = skillsUpdate.findIndex((skill) => skill.name === project)
-
-        if (skillIndex === -1) {
-          skillsUpdate.push({
-            name: project,
-            xp: seconds * 0.36206752777,
-            hours: seconds / 60 / 60,
-          })
-        } else {
-          skillsUpdate[skillIndex].xp += seconds * 0.36206752777
-          skillsUpdate[skillIndex].hours += seconds / 60 / 60
-        }
-      }
-
-      // Sort by xp
-      skillsUpdate.sort((a, b) => b.xp - a.xp)
-
-      setSkills(skillsUpdate)
+        return (
+          <StyledRow key={skill.name}>
+            <StyledCell>
+              <img src="/static/placeholder.png" alt="Placeholder" /> {name}
+            </StyledCell>
+            <StyledCell align={'right'}>1</StyledCell>
+            <StyledCell align={'right'}>{level}</StyledCell>
+            <StyledCell align={'right'}>
+              <acronym title={`${Math.floor(hours)} Hours`}>{Math.floor(xp).toLocaleString()}</acronym>
+            </StyledCell>
+          </StyledRow>
+        )
+      })
     }
-  }, [entries, projects])
-
-  const xpToLevel = (xp) => {
-    const equate = (xp) => Math.floor(xp + 300 * Math.pow(2, xp / 7))
-
-    const levelToXp = (level) => {
-      let xp = 0
-      for (let i = 1; i < level; i++) xp += equate(i)
-      return Math.floor(xp / 4)
-    }
-
-    let level = 1
-    while (levelToXp(level) < xp) level++
-    return level
   }
-
   return (
     <StyledWrapper>
       <StyledFrame>
@@ -191,28 +172,7 @@ const Home = ({ projects, entries }) => {
                 <acronym title="1,303 XP/hour">XP</acronym>
               </StyledHeader>
             </StyledRow>
-            {skills &&
-              skills.map((skill, i) => {
-                const { name } = skill
-                const xp = Math.floor(skill.xp)
-                  .toString()
-                  .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-                const level = xpToLevel(skill.xp)
-                const hours = Math.floor(skill.hours)
-
-                return (
-                  <StyledRow key={skill.name}>
-                    <StyledCell>
-                      <img src="/static/placeholder.png" alt="Placeholder" /> {name}
-                    </StyledCell>
-                    <StyledCell align={'right'}>1</StyledCell>
-                    <StyledCell align={'right'}>{level}</StyledCell>
-                    <StyledCell align={'right'}>
-                      <acronym title={`${hours} Hours`}>{xp}</acronym>
-                    </StyledCell>
-                  </StyledRow>
-                )
-              })}
+            {getSkillsComponent()}
           </StyledTable>
         </StyledScores>
         <StyledScrollBottom />
@@ -224,32 +184,20 @@ const Home = ({ projects, entries }) => {
 export const getServerSideProps = async () => {
   console.log('getStaticProps fired')
 
-  // Get projects
-  const projectsResponse = await fetch(`http://localhost:3000/api/projects`)
-
-  // So much power!
-  if (!projectsResponse.ok) {
-    console.log('Projects response not ok')
-    return { props: {} }
-  }
-
-  const projects = await projectsResponse.json()
-
   // Get entries
-  const entriesResponse = await fetch(`http://localhost:3000/api/entries`)
+  const response = await fetch(`http://localhost:3000/api/users/1/skills`)
 
-  if (!entriesResponse.ok) {
-    console.log('Entries response not ok')
+  if (!response.ok) {
+    console.log('Response not ok')
     return { props: {} }
   }
 
-  const entries = await entriesResponse.json()
+  const skills = await response.json()
 
-  if (projects && entries) {
+  if (skills) {
     return {
       props: {
-        projects,
-        entries,
+        skills,
       },
     }
   }

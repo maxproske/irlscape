@@ -1,4 +1,5 @@
-import { getEntries } from '../../../utils/toggl'
+import { XP_PER_SECOND, xpToLevel } from '../../../../../utils'
+import { getEntries } from '../../../../../utils/toggl'
 
 const axios = require('axios')
 const redis = require('redis')
@@ -35,8 +36,38 @@ const handler = async (req, res) => {
 }
 
 const handleGet = async (req, res) => {
+  let skills = []
+
   const entries = await getEntries(redisInstance, axiosInstance, papaparse, res)
-  res.json(entries)
+
+  for (const entry of entries) {
+    const { project, seconds } = entry
+
+    let skillIndex = skills.findIndex((skill) => skill.name === project)
+
+    // lol...
+    if (skillIndex === -1) {
+      skillIndex =
+        skills.push({
+          name: project,
+          xp: 0,
+          hours: 0,
+        }) - 1
+    }
+
+    skills[skillIndex].xp += seconds * XP_PER_SECOND
+    skills[skillIndex].hours += seconds / 60 / 60
+  }
+
+  skills = skills.map((skill) => {
+    const { xp } = skill
+    return {
+      ...skill,
+      level: xpToLevel(xp),
+    }
+  })
+
+  res.json(skills)
 }
 
 export default handler
