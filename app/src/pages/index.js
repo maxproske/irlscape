@@ -98,7 +98,7 @@ const StyledTable = styled.div`
   grid-template-rows: auto;
 
   max-width: 355px;
-  padding: 0 22px 0 22px;
+  padding: 0 22px 1rem 22px;
 `
 
 const StyledRow = styled.div`

@@ -2,6 +2,8 @@ const axios = require('axios')
 const redis = require('redis')
 const papaparse = require('papaparse')
 
+const allowedSkills = require('./allowedSkills.json')
+
 // Create Redis instnace
 const redisInstance = redis.createClient({
   host: 'irlscape-redis', // Container name
@@ -110,11 +112,12 @@ const handleGet = async (req, res) => {
 
             // Filter entries without a duration and project
             entries = entries.filter((entry) => {
-              return entry.duration && entry.project && entry.project.includes('learn')
+              return entry.duration && entry.project && allowedSkills.includes(entry.project)
             })
 
             // Format response
             entries = entries.map((entry) => {
+              console.log(entry)
               return {
                 project: entry.project,
                 description: entry.description,
