@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  irlscape-app:
+    container_name: irlscape-app
+    build:
+      context: ./app
+      dockerfile: debug.Dockerfile
+    # Sync local changes with container
+    volumes:
+      - ./app/public:/app/public
+      - ./app/src:/app/src
+      - ./app/.next:/app/.next
+      

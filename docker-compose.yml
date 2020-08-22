@@ -5,14 +5,9 @@ services:
     container_name: irlscape-app
     build:
       context: ./app
-      dockerfile: debug.Dockerfile
+      dockerfile: release.Dockerfile
     environment:
       TOGGL_API_TOKEN: ${TOGGL_API_TOKEN}
-    # Sync local changes with container
-    volumes:
-      - ./app/public:/app/public
-      - ./app/src:/app/src
-      - ./app/.next:/app/.next
     ports:
       - 3000:3000
     depends_on:
@@ -20,8 +15,7 @@ services:
 
   irlscape-redis:
     container_name: irlscape-redis
-    build:
-      context: ./redis
-      dockerfile: debug.Dockerfile
+    image: redis:6-alpine
     ports:
       - 6379:6379
+      
